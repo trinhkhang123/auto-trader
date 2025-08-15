@@ -1613,6 +1613,13 @@ class TradingBot:
         except Exception as e:
             logger.error(f"WebSocket error: {str(e)}")
             raise
+        finally:
+            self.running = False
+            if self.ws:
+                self.ws.exit()
+            if self.ws_private:
+                self.ws_private.exit()
+            logger.info("WebSocket connections closed")
 
     def shutdown(self, signum, frame):
         """Xử lý dừng bot an toàn."""
@@ -1662,10 +1669,26 @@ class TradingBot:
             logger.error(f"Error during cleanup: {str(e)}")
         finally:
             # Đánh dấu để chắc chắn các tài nguyên đã được giải phóng
+            print(1234)
             self.running = False
-
+    def stop_websocket(self):
+        """Dừng WebSocket an toàn."""
+        self.running = False
+        try:
+            if self.ws:
+                self.ws.exit()
+                logger.info("Public WebSocket connection closed")
+            if self.ws_private:
+                self.ws_private.exit()
+                logger.info("Private WebSocket connection closed")
+        except Exception as e:
+            logger.error(f"Error closing WebSocket connections: {str(e)}")
+        finally:
+            self.ws = None
+            self.ws_private = None
+            logger.info("WebSocket connections fully closed")
     def safe_float(self, value, default=0.0):
-        """Chuyển đổi an toàn giá trị sang float, trả về giá trị mặc định nếu lỗi."""
+        """Chuyển đổi an toàn giá trị sang float, thrtrả về giá trị mặc định nếu lỗi."""
         if value is None or value == '':
             return default
         try:

@@ -5,6 +5,8 @@ from datetime import datetime
 import threading
 from flask_cors import CORS
 import os
+import signal
+import sys
 # Thiết lập logging
 logging.basicConfig(
     level=logging.INFO,
@@ -30,7 +32,13 @@ try:
     logger.info("WebSocket started automatically on application startup")
 except Exception as e:
     logger.error(f"Error starting WebSocket on application startup: {str(e)}")
-
+def signal_handler(sig, frame):
+    """Xử lý tín hiệu SIGINT hoặc SIGTERM để dừng WebSocket và thoát."""
+    logger.info(f"Received signal {sig}, shutting down...")
+    bot.stop_websocket()
+    sys.exit(0)
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 @app.route('/api/v1/order_best', methods=['POST'])
 def create_order_best():
     """API để lấy danh sách lệnh giao dịch."""
