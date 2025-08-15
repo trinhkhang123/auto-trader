@@ -1,4 +1,5 @@
 import os
+import threading
 from typing import Dict, Any, List
 from dotenv import load_dotenv
 from pybit.unified_trading import HTTP, WebSocket
@@ -13,7 +14,8 @@ import sys
 import uuid
 import random
 import math
-
+import schedule
+from datetime import timedelta
 # Thiết lập logging
 logging.basicConfig(
     level=logging.INFO,
@@ -67,6 +69,9 @@ class TradingBot:
             signal.signal(signal.SIGINT, self.shutdown)
             signal.signal(signal.SIGTERM, self.shutdown)
             logger.info("TradingBot initialized successfully")
+            self.schedule_jobs()
+            # Khởi động luồng cho schedule
+            self.start_schedule_thread()
         except Exception as e:
             logger.error(f"Initialization error: {str(e)}")
             raise
@@ -713,7 +718,7 @@ class TradingBot:
                 return 'NOT_FOUND'
                 
             order = self.client.get_order_history(category='linear', orderId=trade['order_id'])
-            status = order['result']['list'][0]['orderStatus'] if order['retCode'] == 0 else 'ERROR'
+            status = order['result']['list'][0]['orderStatus'] if order['retCode'] == 0 else 'CANCELLED'
             
             if status == 'Filled':
                 self.execute_query(
@@ -1671,6 +1676,74 @@ class TradingBot:
             # Đánh dấu để chắc chắn các tài nguyên đã được giải phóng
             print(1234)
             self.running = False
+    def check_and_cancel_old_orders(self):
+        # Thời điểm hiện tại
+            current_time = datetime.now()
+            # Thời điểm 30 phút trước
+            thirty_minutes_ago = current_time - timedelta(minutes=30)
+
+            # Truy vấn các giao dịch có trạng thái OPEN và được tạo trước 30 phút
+            query = """
+                SELECT id, order_id, symbol, created_at, status
+                FROM trades
+                WHERE status = 'OPEN'
+                AND created_at <= %s
+            """
+            print(f"Retrieved 0 trades with filters bot_name='', status='all'")
+            trades = self.execute_query(
+                query=query,
+                params=(thirty_minutes_ago,),
+                fetch=True,
+                commit=False
+            )
+
+            print(f"Retrieved {len(trades) if trades else 0} trades with filters bot_name='', status='all'")
+
+            if not trades:
+                logger.info("No OPEN trades older than 30 minutes found")
+                return
+            for trade in trades:
+                trade_id = trade['id']
+                order_id = trade['order_id']
+                symbol = trade['symbol']
+                try:
+                    # Kiểm tra trạng thái lệnh trên Bybit
+                    order_status = self.check_order_status(trade_id)
+                    if order_status == 'OPEN':
+                        # Hủy lệnh trên Bybit
+                        cancel_response = self.cancel_order(symbol, order_id)
+                        if cancel_response.get('retCode', -1) == 0:
+                            # Cập nhật trạng thái giao dịch trong cơ sở dữ liệu
+                            self.update_trade_status(trade_id, 'CANCELLED', datetime.now())
+                           
+                        else:
+                            logger.error(f"Failed to cancel trade {trade_id} (order {order_id}): {cancel_response.get('retMsg', 'Unknown error')}")
+                    elif order_status != 'OPEN':
+                        # Cập nhật trạng thái nếu lệnh không còn ở trạng thái OPEN
+                        self.update_trade_status(trade_id, order_status)
+                        logger.info(f"Trade {trade_id} is no longer OPEN, current status: {order_status}")
+                except Exception as e:
+                    logger.error(f"Error processing trade {trade_id}: {str(e)}")
+    def schedule_jobs(self):
+        """Lên lịch các công việc định kỳ."""
+        schedule.every(1).minutes.do(self.check_and_cancel_old_orders)
+        logger.info("Scheduled job to check and cancel old orders every 5 minutes")
+
+    def run_scheduled_jobs(self):
+        """Chạy các công việc định kỳ trong một luồng riêng."""
+        logger.info("Starting run_scheduled_jobs")
+        while self.running:
+            try:
+                schedule.run_pending()
+                time.sleep(60)
+            except Exception as e:
+                logger.error(f"Error in run_scheduled_jobs: {str(e)}")
+
+    def start_schedule_thread(self):
+        """Khởi động luồng riêng cho lịch trình."""
+        schedule_thread = threading.Thread(target=self.run_scheduled_jobs, daemon=True)
+        schedule_thread.start()
+        logger.info("Schedule thread started")
     def stop_websocket(self):
         """Dừng WebSocket an toàn."""
         self.running = False

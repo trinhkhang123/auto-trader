@@ -26,7 +26,7 @@
     `tp2_order_id` varchar(100) DEFAULT NULL,
     `tp3_order_id` varchar(100) DEFAULT NULL,
     `pnl` decimal(20,8) DEFAULT '0.00000000' COMMENT 'Lợi nhuận/lỗ',
-    `pnl_percent` decimal(10,4) DEFAULT '0.0000' COMMENT 'Lợi nhuận/lỗ %',
+    `pnl_percent` decimal(20,8) DEFAULT '0.0000' COMMENT 'Lợi nhuận/lỗ %',
     `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `closed_at` timestamp NULL DEFAULT NULL,

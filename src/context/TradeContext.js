@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API_URL = 'http://192.168.56.56:5000/api/v1';
+const API_URL = 'http://192.168.56.56:5234/api/v1';
 
 const TradeContext = createContext();
 
