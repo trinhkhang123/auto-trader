@@ -68,6 +68,8 @@ def create_order_ema():
     try:
         data = request.get_json()
         required_fields = ['asset', 'position', 'entry1', 'strategy_type', 'leverage', 'tp1', 'stoploss', 'bot', 'tp2', 'tp3']
+        print(data)
+        return jsonify({'da ta': data}), 200
         if not all(field in data for field in required_fields):
             return jsonify({'error': 'Missing required fields'}), 400
 
