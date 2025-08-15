@@ -47,9 +47,11 @@ def create_order_best():
         required_fields = ['asset', 'position', 'entry1', 'strategy_type', 'leverage', 'tp1', 'stoploss', 'bot', 'tp2', 'tp3']
         if not all(field in data for field in required_fields):
             return jsonify({'error': 'Missing required fields'}), 400
+        base, quote = data['asset'].split('/')
+        formated_symbol = f"{base}{quote}"
 
         signal = {
-            'asset': data['asset'],
+            'asset': formated_symbol,
             'position': data['position'],
             'entry1': float(data['entry1']),
             'strategy_type': data['strategy_type'],
