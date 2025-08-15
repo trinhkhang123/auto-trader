@@ -45,7 +45,7 @@ def create_order_best():
     try:
         data = request.get_json()
         required_fields = ['asset', 'position', 'entry1', 'leverage', 'tp1', 'stoploss', 'bot', 'tp2', 'tp3']
-        print(data)
+        print("12345", data)
         if not all(field in data for field in required_fields):
             return jsonify({'error': 'Missing required fields'}), 400
         base, quote = data['asset'].split('/')
@@ -55,13 +55,12 @@ def create_order_best():
             'asset': formated_symbol,
             'position': data['position'],
             'entry1': float(data['entry1']),
-            'strategy_type': data['strategy_type'],
             'leverage': int(data['leverage']),
             'tp1': float(data['tp1']),
             'tp2': float(data['tp2']),
             'tp3': float(data['tp3']),
             'stoploss': float(data['stoploss']),
-            'bot': data['bot']
+            'bot': "bestsignal"
         }
 
         print(signal)
@@ -80,7 +79,7 @@ def create_order_ema():
     """API để lấy danh sách lệnh giao dịch."""
     try:
         data = request.get_json()
-        required_fields = ['asset', 'position', 'entry1', 'strategy_type', 'leverage', 'tp1', 'stoploss', 'bot', 'tp2', 'tp3']
+        required_fields = ['asset', 'position', 'entry1', 'leverage', 'tp1', 'stoploss', 'bot', 'tp2', 'tp3']
         if not all(field in data for field in required_fields):
             return jsonify({'error': 'Missing required fields'}), 400
 
@@ -88,13 +87,12 @@ def create_order_ema():
             'asset': data['asset'],
             'position': data['position'],
             'entry1': float(data['entry1']),
-            'strategy_type': data['strategy_type'],
             'leverage': int(data['leverage']),
             'tp1': float(data['tp1']),
             'tp2': float(data['tp2']),
             'tp3': float(data['tp3']),
             'stoploss': float(data['stoploss']),
-            'bot': data['bot']
+            'bot': "ema"
         }
 
         result = bot.create_order_best(signal,'ema')

@@ -444,8 +444,6 @@ class TradingBot:
         try:
             # Map signal keys from provided data to expected keys
             strategy_type = signal.get('strategy_type', 'strategy1')  # Default to 'strategy1' if not provided
-            if strategy_type not in ['strategy1', 'strategy2']:
-                raise ValueError("Invalid strategy_type. Must be 'strategy1' or 'strategy2'")
             
             position_size = 300  # Fixed position size of 30 USDT
             quantity = position_size / signal['entry1']  # Calculate quantity based on entry price
@@ -1726,7 +1724,7 @@ class TradingBot:
                     logger.error(f"Error processing trade {trade_id}: {str(e)}")
     def schedule_jobs(self):
         """Lên lịch các công việc định kỳ."""
-        schedule.every(1).minutes.do(self.check_and_cancel_old_orders)
+        schedule.every(10).minutes.do(self.check_and_cancel_old_orders)
         logger.info("Scheduled job to check and cancel old orders every 5 minutes")
 
     def run_scheduled_jobs(self):
