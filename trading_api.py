@@ -45,6 +45,8 @@ def create_order_best():
     try:
         data = request.get_json()
         required_fields = ['asset', 'position', 'entry1', 'strategy_type', 'leverage', 'tp1', 'stoploss', 'bot', 'tp2', 'tp3']
+        print(data)
+        return jsonify({'error': 'Missing required fields'}), 400
         if not all(field in data for field in required_fields):
             return jsonify({'error': 'Missing required fields'}), 400
         base, quote = data['asset'].split('/')
@@ -78,6 +80,8 @@ def create_order_ema():
     try:
         data = request.get_json()
         required_fields = ['asset', 'position', 'entry1', 'strategy_type', 'leverage', 'tp1', 'stoploss', 'bot', 'tp2', 'tp3']
+        print(data)
+        return jsonify({'error': 'Missing required fields'}), 400
         if not all(field in data for field in required_fields):
             return jsonify({'error': 'Missing required fields'}), 400
 
