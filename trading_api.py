@@ -44,7 +44,8 @@ def create_order_best():
     """API để lấy danh sách lệnh giao dịch."""
     try:
         data = request.get_json()
-        required_fields = ['asset', 'position', 'entry1', 'strategy_type', 'leverage', 'tp1', 'stoploss', 'bot', 'tp2', 'tp3']
+        required_fields = ['asset', 'position', 'entry1', 'leverage', 'tp1', 'stoploss', 'bot', 'tp2', 'tp3']
+        print(data)
         if not all(field in data for field in required_fields):
             return jsonify({'error': 'Missing required fields'}), 400
         base, quote = data['asset'].split('/')
@@ -62,6 +63,8 @@ def create_order_best():
             'stoploss': float(data['stoploss']),
             'bot': data['bot']
         }
+
+        print(signal)
 
         result = bot.create_order_best(signal,'best')
         if 'error' in result:
