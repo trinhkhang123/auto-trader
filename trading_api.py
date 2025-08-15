@@ -53,7 +53,7 @@ def create_order_best():
             'bot': data['bot']
         }
 
-        result = bot.create_order_best(signal)
+        result = bot.create_order_best(signal,'best')
         if 'error' in result:
             return jsonify({'error': result['error']}), 400
         return jsonify(result), 201
@@ -62,6 +62,36 @@ def create_order_best():
         logger.error(f"Error in create_order_best API: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/v1/order_ema', methods=['POST'])
+def create_order_ema():
+    """API để lấy danh sách lệnh giao dịch."""
+    try:
+        data = request.get_json()
+        required_fields = ['asset', 'position', 'entry1', 'strategy_type', 'leverage', 'tp1', 'stoploss', 'bot', 'tp2', 'tp3']
+        if not all(field in data for field in required_fields):
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        signal = {
+            'asset': data['asset'],
+            'position': data['position'],
+            'entry1': float(data['entry1']),
+            'strategy_type': data['strategy_type'],
+            'leverage': int(data['leverage']),
+            'tp1': float(data['tp1']),
+            'tp2': float(data['tp2']),
+            'tp3': float(data['tp3']),
+            'stoploss': float(data['stoploss']),
+            'bot': data['bot']
+        }
+
+        result = bot.create_order_best(signal,'ema')
+        if 'error' in result:
+            return jsonify({'error': result['error']}), 400
+        return jsonify(result), 201
+
+    except Exception as e:
+        logger.error(f"Error in create_order_ema API: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 @app.route('/api/v1/orders', methods=['POST'])
 def create_order():
     """API để tạo lệnh giao dịch mới."""
@@ -314,4 +344,4 @@ def cancel_order():
 
 if __name__ == '__main__':
     print("Flask starting...")  # thêm dòng này
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)

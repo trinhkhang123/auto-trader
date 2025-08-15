@@ -434,7 +434,7 @@ class TradingBot:
             return {'error': str(e)}
 
 
-    def create_order_best(self, signal: Dict[str, Any]) -> Dict[str, Any]:
+    def create_order_best(self, signal: Dict[str, Any], type: str) -> Dict[str, Any]:
         """Tạo lệnh giao dịch trên Bybit với Take Profit và Stop Loss, vị thế 30 USDT."""
         try:
             # Map signal keys from provided data to expected keys
@@ -544,20 +544,33 @@ class TradingBot:
                 logger.warning(f"Failed to set leverage: {str(e)}")
 
             # Đặt lệnh giao dịch
-            
-            order = self.client.place_order(
-                category='linear',
-                symbol=signal['asset'],
-                side=side,
-                orderType='Limit',  # Changed from 'Market' to 'Limit'
-                qty=f"{round(quantity, 8)}",
-                price=f"{signal['entry1']}",  # Specify the desired entry price
-                timeInForce='GTC',
-                positionIdx=position_idx,
-                takeProfit=f"{signal['tp3']}",
-                stopLoss=f"{signal['stoploss']}",
-                reduceOnly=False
-            )
+            if type == 'ema':
+                order = self.client.place_order(
+                    category='linear',
+                    symbol=signal['asset'],
+                    side=side,
+                    orderType='Market',
+                    qty=f"{round(quantity, 8)}",
+                    timeInForce='GTC',
+                    positionIdx=position_idx,
+                    takeProfit=f"{signal['tp3']}",
+                    stopLoss=f"{signal['stoploss']}",
+                    reduceOnly=False
+                )
+            else:
+                order = self.client.place_order(
+                    category='linear',
+                    symbol=signal['asset'],
+                    side=side,
+                    orderType='Limit',  # Changed from 'Market' to 'Limit'
+                    qty=f"{round(quantity, 8)}",
+                    price=f"{signal['entry1']}",  # Specify the desired entry price
+                    timeInForce='GTC',
+                    positionIdx=position_idx,
+                    takeProfit=f"{signal['tp3']}",
+                    stopLoss=f"{signal['stoploss']}",
+                    reduceOnly=False
+                )
             
             # Lưu vào cơ sở dữ liệu
             if order['retCode'] == 0:
@@ -580,7 +593,7 @@ class TradingBot:
                     leverage,
                     signal.get('tp1'),
                     signal.get('tp2'),
-                    signal.get('tp3'),
+                    signal.get('tp3', 0),
                     signal['stoploss'],
                     signal['stoploss'],
                     signal.get('tp1'),
@@ -662,7 +675,7 @@ class TradingBot:
                 logger.info(f"TP2 order placed: {tp2_order_id}, Symbol: {symbol}, Price: {tp2_price}")
             else:
                 logger.warning(f"Failed to place TP2 order: {tp2_order.get('retMsg', 'Unknown error')}")
-
+            
             # Đặt lệnh TP3
             tp3_order = self.client.place_order(
                 category='linear',
@@ -1621,7 +1634,7 @@ class TradingBot:
             if hasattr(self, 'db_pool') and self.db_pool is not None:
                 # Lấy tất cả các kết nối từ pool và đóng chúng
                 try:
-                    for _ in range(self.pool_size):
+                    for _ in range(self.db_config.get('pool_size', 5)):
                         try:
                             conn = self.db_pool.get_connection()
                             conn.close()
