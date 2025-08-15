@@ -344,4 +344,5 @@ def cancel_order():
 
 if __name__ == '__main__':
     print("Flask starting...")  # thêm dòng này
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    port = os.getenv('PORT', 5001)
+    app.run(host='0.0.0.0', port=port, debug=True)
