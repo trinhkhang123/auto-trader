@@ -632,10 +632,10 @@ class TradingBot:
             
             # Tính số lượng cho mỗi TP (10 USDT)
             tp1_quantity = 150 / entry_price  # Số lượng cho 10 USDT
-            tp1_quantity = round(math.floor(tp_quantity / float(self.client.get_instruments_info(category="linear", symbol=symbol)["result"]["list"][0]['lotSizeFilter']['qtyStep'])) * float(self.client.get_instruments_info(category="linear", symbol=symbol)["result"]["list"][0]['lotSizeFilter']['qtyStep']), 8)
+            tp1_quantity = round(math.floor(tp1_quantity / float(self.client.get_instruments_info(category="linear", symbol=symbol)["result"]["list"][0]['lotSizeFilter']['qtyStep'])) * float(self.client.get_instruments_info(category="linear", symbol=symbol)["result"]["list"][0]['lotSizeFilter']['qtyStep']), 8)
 
             tp2_quantity = 90 / entry_price  # Số lượng cho 10 USDT
-            tp2_quantity = round(math.floor(tp_quantity / float(self.client.get_instruments_info(category="linear", symbol=symbol)["result"]["list"][0]['lotSizeFilter']['qtyStep'])) * float(self.client.get_instruments_info(category="linear", symbol=symbol)["result"]["list"][0]['lotSizeFilter']['qtyStep']), 8)
+            tp2_quantity = round(math.floor(tp2_quantity / float(self.client.get_instruments_info(category="linear", symbol=symbol)["result"]["list"][0]['lotSizeFilter']['qtyStep'])) * float(self.client.get_instruments_info(category="linear", symbol=symbol)["result"]["list"][0]['lotSizeFilter']['qtyStep']), 8)
 
             print("is place tp ", tp1_quantity, tp2_quantity)
             # Đặt lệnh TP1

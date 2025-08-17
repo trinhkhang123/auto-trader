@@ -51,6 +51,14 @@ def create_order_best():
         base, quote = data['asset'].split('/')
         formated_symbol = f"{base}{quote}"
 
+        resp = bot.client.get_tickers(
+            category="linear",   # linear = USDT Perp (futures)
+            symbol=formated_symbol
+        )
+        last_price = float(resp['result']['list'][0]['lastPrice'])
+
+        percentage = (float(data['entry1']) - last_price) / last_price * 100
+
         signal = {
             'asset': formated_symbol,
             'position': data['position'],
@@ -64,8 +72,14 @@ def create_order_best():
         }
 
         print(signal)
-
-        result = bot.create_order_best(signal,'ema')
+        if percentage > -1 and percentage < 1:
+            signal["stoploss"] = signal["stoploss"] - percentage*last_price/100
+            signal["tp1"] = signal["tp1"] - percentage*last_price/100
+            signal["tp2"] = signal["tp2"] - percentage*last_price/100
+            signal["tp3"] = signal["tp3"] - percentage*last_price/100
+            result = bot.create_order_best(signal,'ema')
+        else:
+            result = bot.create_order_best(signal,'best')
         if 'error' in result:
             return jsonify({'error': result['error']}), 400
         return jsonify(result), 201
@@ -311,6 +325,15 @@ def get_balance():
 @app.route('/api/v1/trades', methods=['GET'])
 def get_trades():
     """API để lấy danh sách lệnh giao dịch với bộ lọc bot_nasme và status."""
+    resp = bot.client.get_tickers(
+    category="linear",   # linear = USDT Perp (futures)
+    symbol="BNBUSDT"
+    )
+    last_price = resp['result']['list'][0]['lastPrice']
+    mark_price = resp['result']['list'][0]['markPrice']
+    index_price = resp['result']['list'][0]['indexPrice']
+
+    print(f"Futures BNBUSDT: last={last_price}, mark={mark_price}, index={index_price}")
     try:
         bot_name = request.args.get('bot_name', '')
         status = request.args.get('status', '')
