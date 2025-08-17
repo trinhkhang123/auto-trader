@@ -601,7 +601,7 @@ class TradingBot:
                     signal['stoploss'],
                     signal.get('tp1'),
                     strategy_type,
-                    'OPEN',
+                    'FILLED' if type == 'ema' else 'OPEN',
                     bot_name
                 )
                 
@@ -613,6 +613,9 @@ class TradingBot:
                     commit=True
                 )
                 
+                if type == 'ema':
+                    self.place_tp_orders(trade_id=trade_id, symbol=signal['asset'], side=side, quantity=quantity, tp1_price=signal.get('tp1'), tp2_price=signal.get('tp2'), tp3_price=signal.get('tp3', 0), position_idx=position_idx, entry_price=signal['entry1'])
+  
                 return { 'order_id': order_id, 'status': 'OPEN', 'bot_name': bot_name}
             else:
                 logger.error(f"Order creation failed: {order['retMsg']}")
@@ -628,16 +631,20 @@ class TradingBot:
             logger.info(f"Placing TP1/TP2/TP3 for trade {trade_id}, symbol: {symbol}")
             
             # Tính số lượng cho mỗi TP (10 USDT)
-            tp_quantity = 100 / entry_price  # Số lượng cho 10 USDT
-            tp_quantity = round(math.floor(tp_quantity / float(self.client.get_instruments_info(category="linear", symbol=symbol)["result"]["list"][0]['lotSizeFilter']['qtyStep'])) * float(self.client.get_instruments_info(category="linear", symbol=symbol)["result"]["list"][0]['lotSizeFilter']['qtyStep']), 8)
+            tp1_quantity = 150 / entry_price  # Số lượng cho 10 USDT
+            tp1_quantity = round(math.floor(tp_quantity / float(self.client.get_instruments_info(category="linear", symbol=symbol)["result"]["list"][0]['lotSizeFilter']['qtyStep'])) * float(self.client.get_instruments_info(category="linear", symbol=symbol)["result"]["list"][0]['lotSizeFilter']['qtyStep']), 8)
 
+            tp2_quantity = 90 / entry_price  # Số lượng cho 10 USDT
+            tp2_quantity = round(math.floor(tp_quantity / float(self.client.get_instruments_info(category="linear", symbol=symbol)["result"]["list"][0]['lotSizeFilter']['qtyStep'])) * float(self.client.get_instruments_info(category="linear", symbol=symbol)["result"]["list"][0]['lotSizeFilter']['qtyStep']), 8)
+
+            print("is place tp ", tp1_quantity, tp2_quantity)
             # Đặt lệnh TP1
             tp1_order = self.client.place_order(
                 category='linear',
                 symbol=symbol,
                 side='Sell' if side == 'Buy' else 'Buy',
                 orderType='Limit',
-                qty=f"{tp_quantity}",
+                qty=f"{tp1_quantity}",
                 price=f"{tp1_price}",
                 timeInForce='GTC',
                 positionIdx=position_idx,
@@ -654,14 +661,15 @@ class TradingBot:
                 logger.info(f"TP1 order placed: {tp1_order_id}, Symbol: {symbol}, Price: {tp1_price}")
             else:
                 logger.warning(f"Failed to place TP1 order: {tp1_order.get('retMsg', 'Unknown error')}")
-
+            
+            print("order id tp1", tp1_order_id)
             # Đặt lệnh TP2
             tp2_order = self.client.place_order(
                 category='linear',
                 symbol=symbol,
                 side='Sell' if side == 'Buy' else 'Buy',
                 orderType='Limit',
-                qty=f"{tp_quantity}",
+                qty=f"{tp2_quantity}",
                 price=f"{tp2_price}",
                 timeInForce='GTC',
                 positionIdx=position_idx,
@@ -679,31 +687,10 @@ class TradingBot:
             else:
                 logger.warning(f"Failed to place TP2 order: {tp2_order.get('retMsg', 'Unknown error')}")
             
+            print("order id tp2", tp2_order_id)
             # Đặt lệnh TP3
-            tp3_order = self.client.place_order(
-                category='linear',
-                symbol=symbol,
-                side='Sell' if side == 'Buy' else 'Buy',
-                orderType='Limit',
-                qty=f"{tp_quantity}",
-                price=f"{tp3_price}",
-                timeInForce='GTC',
-                positionIdx=position_idx,
-                reduceOnly=True
-            )
-            tp3_order_id = None
-            if tp3_order['retCode'] == 0:
-                tp3_order_id = tp3_order['result']['orderId']
-                self.execute_query(
-                    "UPDATE trades SET tp3_order_id = %s WHERE id = %s",
-                    (tp3_order_id, trade_id),
-                    commit=True
-                )
-                logger.info(f"TP3 order placed: {tp3_order_id}, Symbol: {symbol}, Price: {tp3_price}")
-            else:
-                logger.warning(f"Failed to place TP3 order: {tp3_order.get('retMsg', 'Unknown error')}")
 
-            return {'tp1_order_id': tp1_order_id, 'tp2_order_id': tp2_order_id, 'tp3_order_id': tp3_order_id}
+            return {'tp1_order_id': tp1_order_id, 'tp2_order_id': tp2_order_id}
         except Exception as e:
             logger.error(f"Error placing TP orders: {str(e)}")
             return {'error': str(e)}
@@ -779,7 +766,6 @@ class TradingBot:
                     fetch=False,
                     commit=True
                 )
-                self.log_update(trade_id, 'TP1_HIT', current_price, trade['entry_price'], trade['current_tp'], pnl, 'Moved SL to entry')
                 logger.info(f"Trade {trade_id}: TP1 hit, SL moved to entry")
                 return {'status': 'TP1_HIT', 'message': 'Stoploss moved to entry', 'pnl': pnl}
             
@@ -801,7 +787,6 @@ class TradingBot:
                     fetch=False,
                     commit=True
                 )
-                self.log_update(trade_id, 'TP2_HIT', current_price, trade['tp1_price'], trade['current_tp'], pnl, 'Moved SL to TP1')
                 logger.info(f"Trade {trade_id}: TP2 hit, SL moved to TP1")
                 return {'status': 'TP2_HIT', 'message': 'Stoploss moved to TP1', 'pnl': pnl}
 
@@ -821,7 +806,6 @@ class TradingBot:
                     fetch=False,
                     commit=True
                 )
-                self.log_update(trade_id, 'CLOSED', current_price, None, None, pnl, 'Closed at stoploss')
                 logger.info(f"Trade {trade_id}: Hit stoploss, position closed")
                 return {'status': 'CLOSED', 'message': 'Position closed at stoploss', 'pnl': pnl}
 
@@ -855,7 +839,6 @@ class TradingBot:
                 fetch=False,
                 commit=True
             )
-            self.log_update(trade_id, trade['status'], None, new_sl, trade['current_tp'], None, 'Updated stoploss')
             logger.info(f"Trade {trade_id}: Stoploss updated to {new_sl}")
             return True
 
@@ -1006,16 +989,6 @@ class TradingBot:
                     logger.error(f"Không thể cập nhật thông tin giao dịch {trade_id}")
                     return False
                     
-                # Ghi log cập nhật
-                self.log_update(
-                    trade_id=trade_id, 
-                    status="POSITION_CLOSED" if float(percentage) >= 1.0 else "POSITION_PARTIALLY_CLOSED",
-                    price=current_price,
-                    sl_price=trade.get('current_sl'),
-                    tp_price=trade.get('current_tp'),
-                    pnl=pnl,
-                    notes=f'Đã đóng {float(percentage)*100:.2f}% vị thế'
-                )
                 
                 logger.info(f"Đã đóng {float(percentage)*100:.2f}% vị thế cho giao dịch {trade_id}")
                 
@@ -1082,14 +1055,7 @@ class TradingBot:
             
             if rows_affected and rows_affected > 0:
                 logger.info(f"Successfully updated trade {trade_id} status to '{status}'")
-                
-                # Ghi log cập nhật trạng thái
-                self.log_update(
-                    trade_id=trade_id,
-                    status=f"STATUS_UPDATED_{status}",
-                    notes=f"Cập nhật trạng thái giao dịch thành '{status}'"
-                )
-                
+            
                 return True
                 
             logger.warning(f"No rows affected when updating trade {trade_id} status")
@@ -1563,15 +1529,6 @@ class TradingBot:
                                     ('TP1_HIT', trade['tp1_price'], trade_id),
                                     commit=True
                                 )
-                                self.log_update(
-                                    trade_id, 
-                                    'TP1_HIT', 
-                                    None, 
-                                    trade['entry_price'], 
-                                    trade['tp1_price'], 
-                                    None, 
-                                    'TP1 hit, SL moved to entry'
-                                )
                                 logger.info(f"Trade {trade_id}: TP1 hit, SL moved to {trade['entry_price']}")
                                 continue
 
@@ -1583,15 +1540,7 @@ class TradingBot:
                                     ('TP2_HIT', trade['tp2_price'], trade_id),
                                     commit=True
                                 )
-                                self.log_update(
-                                    trade_id,
-                                    'TP2_HIT',
-                                    None,
-                                    trade['tp1_price'],
-                                    trade['tp2_price'],
-                                    None,
-                                    'TP2 hit, SL moved to TP1'
-                                )
+                               
                                 logger.info(f"Trade {trade_id}: TP2 hit, SL moved to {trade['tp1_price']}")
                                 continue
 
@@ -1705,21 +1654,12 @@ class TradingBot:
                 order_id = trade['order_id']
                 symbol = trade['symbol']
                 try:
-                    # Kiểm tra trạng thái lệnh trên Bybit
-                    order_status = self.check_order_status(trade_id)
-                    if order_status == 'OPEN':
-                        # Hủy lệnh trên Bybit
-                        cancel_response = self.cancel_order(symbol, order_id)
-                        if cancel_response.get('retCode', -1) == 0:
-                            # Cập nhật trạng thái giao dịch trong cơ sở dữ liệu
-                            self.update_trade_status(trade_id, 'CANCELLED', datetime.now())
-                           
-                        else:
-                            logger.error(f"Failed to cancel trade {trade_id} (order {order_id}): {cancel_response.get('retMsg', 'Unknown error')}")
-                    elif order_status != 'OPEN':
-                        # Cập nhật trạng thái nếu lệnh không còn ở trạng thái OPEN
-                        self.update_trade_status(trade_id, order_status)
-                        logger.info(f"Trade {trade_id} is no longer OPEN, current status: {order_status}")
+                    # Hủy lệnh trên Bybit
+                    cancel_response = self.cancel_order(symbol, order_id)
+                    if cancel_response.get('retCode', -1) == 0:
+                        # Cập nhật trạng thái giao dịch trong cơ sở dữ liệu
+                        self.update_trade_status(trade_id, 'CANCELLED', datetime.now())
+                       
                 except Exception as e:
                     logger.error(f"Error processing trade {trade_id}: {str(e)}")
     def schedule_jobs(self):

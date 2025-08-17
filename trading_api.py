@@ -65,7 +65,7 @@ def create_order_best():
 
         print(signal)
 
-        result = bot.create_order_best(signal,'best')
+        result = bot.create_order_best(signal,'ema')
         if 'error' in result:
             return jsonify({'error': result['error']}), 400
         return jsonify(result), 201
