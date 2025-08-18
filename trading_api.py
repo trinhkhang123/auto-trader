@@ -178,7 +178,7 @@ def update_position(trade_id):
         logger.error(f"Error in update_position API: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/v1/positions/<int:trade_id>/stoploss', methods=['PUT'])
+@app.route('/api/v1/positions/<int:trade_id>/stoploss', methods=['POST'])
 def update_stoploss(trade_id):
     """API để cập nhật stoploss cho giao dịch."""
     try:

@@ -828,7 +828,8 @@ class TradingBot:
                 category='linear',
                 symbol=trade['symbol'],
                 stopLoss=str(new_sl),
-                side=trade['side']
+                side=trade['side'],
+                positionIdx=1 if trade['side'] == "Buy" else 2
             )
 
             self.execute_query(
