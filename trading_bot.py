@@ -462,7 +462,7 @@ class TradingBot:
 
             try:
                 # Kiểm tra các vị thế hiện tại
-                response = self.client.get_position_list(
+                response = self.client.get_positions(
                     category='linear',
                     symbol=signal['asset']
                 )
@@ -470,17 +470,21 @@ class TradingBot:
                     positions = response.get('result', {}).get('list', [])
                     for position in positions:
                         if position['symbol'] == signal['asset'] and position['side'] == side and float(position['size']) > 0:
-                            return {'error': 'Position already exists'}
-                            # close_response = self.client.close_position(
-                            #     category='linear',
-                            #     symbol=signal['asset'],
-                            #     side='Buy' if position['side'] == 'Sell' else 'Sell',
-                            #     qty=position['size']
-                            # )
-                            # if close_response.get('retCode', 0) == 0:
-                            #     logger.info(f"Đã đóng vị thế cho {signal['asset']}, side: {side}, qty: {position['size']}")
-                            # else:
-                            #     logger.warning(f"Không thể đóng vị thế cho {signal['asset']}: {close_response.get('retMsg', 'Lỗi không xác định')}")
+                           
+                            close_response = self.client.place_order(
+                                category='linear',
+                                symbol=signal['asset'],
+                                side='Buy' if position['side'] == 'Sell' else 'Sell',
+                                orderType='Market',
+                                qty=str(round(position['size'], 8)),
+                                reduceOnly=True,
+                                positionIdx=1 if side == 'Buy' else 2
+                            )
+                            
+                            if close_response.get('retCode', 0) == 0:
+                                logger.info(f"Đã đóng vị thế cho {signal['asset']}, side: {side}, qty: {position['size']}")
+                            else:
+                                logger.warning(f"Không thể đóng vị thế cho {signal['asset']}: {close_response.get('retMsg', 'Lỗi không xác định')}")
                 else:
                     logger.warning(f"Không thể lấy danh sách vị thế: {response.get('retMsg', 'Lỗi không xác định')}")
 
