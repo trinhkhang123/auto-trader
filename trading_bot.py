@@ -469,8 +469,8 @@ class TradingBot:
                 if response.get('retCode', -1) == 0:
                     positions = response.get('result', {}).get('list', [])
                     for position in positions:
-                        if position['symbol'] == signal['asset'] and position['side'] == side and float(position['size']) > 0:
-                           
+                        if position['symbol'] == signal['asset'] and float(position['size']) > 0:
+                            position_idx = int(position.get('positionIdx', 0))
                             close_response = self.client.place_order(
                                 category='linear',
                                 symbol=signal['asset'],
@@ -478,7 +478,7 @@ class TradingBot:
                                 orderType='Market',
                                 qty=str(round(position['size'], 8)),
                                 reduceOnly=True,
-                                positionIdx=1 if side == 'Buy' else 2
+                                positionIdx=position_idx
                             )
                             
                             if close_response.get('retCode', 0) == 0:
