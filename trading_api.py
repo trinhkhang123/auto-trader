@@ -77,6 +77,7 @@ def create_order_best():
             signal["tp1"] = signal["tp1"] - percentage*last_price/100
             signal["tp2"] = signal["tp2"] - percentage*last_price/100
             signal["tp3"] = signal["tp3"] - percentage*last_price/100
+            signal["entry1"] = signal["entry1"] - percentage*last_price/100
             result = bot.create_order_best(signal,'ema')
         else:
             result = bot.create_order_best(signal,'best')
