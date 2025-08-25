@@ -582,6 +582,18 @@ class TradingBot:
             # Lưu vào cơ sở dữ liệu
             if order['retCode'] == 0:
                 order_id = order['result']['orderId']
+
+                if type == 'ema':
+                    avg_price = order.get('result', {}).get('avgPrice')
+                    if avg_price and float(avg_price) > 0:
+                        percentage = (float(signal['entry1']) - float(avg_price)) / float(avg_price)
+                        signal['entry1'] = avg_price
+                        signal['tp1'] = float(signal['tp1']) - percentage*float(avg_price)
+                        signal['tp2'] = float(signal['tp2']) - percentage*float(avg_price)
+                        signal['tp3'] = float(signal['tp3']) - percentage*float(avg_price)
+                        signal['stoploss'] = float(signal['stoploss']) - percentage*float(avg_price)
+                        self.update_stoploss(trade_id, signal['stoploss'])
+                        logger.info(f"Updated stoploss for trade {trade_id}: {signal['stoploss']}")
             
                 insert_query = """
                     INSERT INTO trades (
@@ -1230,8 +1242,6 @@ class TradingBot:
 
                         if pos_response.get('retCode') == 0:
                             for pos in pos_response.get('result', {}).get('list', []):
-                                if float(pos.get('size')) > 0:
-                                    print(pos)
                                 if pos.get('symbol') == order.get('symbol') and pos.get('positionIdx') == order.get('positionIdx'):
                                     leverage = int(float(pos.get('leverage', 1)))
                                     stop_loss = float(pos.get('stopLoss', 0)) if pos.get('stopLoss') else 0
