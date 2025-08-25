@@ -42,6 +42,11 @@ signal.signal(signal.SIGTERM, signal_handler)
 @app.route('/api/v1/order_best', methods=['POST'])
 def create_order_best():
     """API để lấy danh sách lệnh giao dịch."""
+    current_time = datetime.now()
+    minutes = current_time.minute
+
+    if minutes > 10:
+        return jsonify({'error': 'Minutes must be less than 10'}), 400
     try:
         data = request.get_json()
         required_fields = ['asset', 'position', 'entry1', 'leverage', 'tp1', 'stoploss', 'bot', 'tp2', 'tp3']
@@ -93,6 +98,12 @@ def create_order_best():
 def create_order_ema():
     """API để lấy danh sách lệnh giao dịch."""
     try:
+        current_time = datetime.now()
+        minutes = current_time.minute
+
+        if minutes > 10:
+            return jsonify({'error': 'Minutes must be less than 10'}), 400
+
         data = request.get_json()
         required_fields = ['asset', 'position', 'entry1', 'leverage', 'tp1', 'stoploss', 'bot', 'tp2', 'tp3']
         if not all(field in data for field in required_fields):

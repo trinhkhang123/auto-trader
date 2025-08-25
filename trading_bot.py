@@ -1223,13 +1223,15 @@ class TradingBot:
                     stop_loss = 0
                     pnl = 0
                     take_profit = 0
-                    price = float(order.get('triggerPrice', 0)) if order.get('orderStatus') == 'Untriggered' else float(order.get('price', 0))
+                    price = float(order.get('triggerPrice', 0)) if order.get('orderStatus') == 'Untriggered' else float(order.get('Price', 0))
                     try:
                         # Sử dụng get_positions thay vì get_position_list
                         pos_response = self.unified_client.get_positions(category='linear', symbol=order.get('symbol'))
 
                         if pos_response.get('retCode') == 0:
                             for pos in pos_response.get('result', {}).get('list', []):
+                                if float(pos.get('size')) > 0:
+                                    print(pos)
                                 if pos.get('symbol') == order.get('symbol') and pos.get('positionIdx') == order.get('positionIdx'):
                                     leverage = int(float(pos.get('leverage', 1)))
                                     stop_loss = float(pos.get('stopLoss', 0)) if pos.get('stopLoss') else 0
