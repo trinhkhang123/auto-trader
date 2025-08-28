@@ -1644,7 +1644,7 @@ class TradingBot:
         # Thời điểm hiện tại
             current_time = datetime.now()
             # Thời điểm 30 phút trước
-            thirty_minutes_ago = current_time - timedelta(minutes=30)
+            thirty_minutes_ago = current_time - timedelta(minutes=60)
 
             # Truy vấn các giao dịch có trạng thái OPEN và được tạo trước 30 phút
             query = """

@@ -83,6 +83,19 @@ def create_order_best():
             signal["tp2"] = signal["tp2"] - percentage*last_price/100
             signal["tp3"] = signal["tp3"] - percentage*last_price/100
             signal["entry1"] = signal["entry1"] - percentage*last_price/100
+        else:
+            if signal["position"] == "LONG":
+                signal["stoploss"] = signal["stoploss"] + signal["stoploss"] * 0.004
+                signal["tp1"] = signal["tp1"] + signal["tp1"] * 0.004
+                signal["tp2"] = signal["tp2"] + signal["tp2"] * 0.004
+                signal["tp3"] = signal["tp3"] + signal["tp3"] * 0.004
+                signal["entry1"] = signal["entry1"] + signal["entry1"] * 0.004
+            else:
+                signal["stoploss"] = signal["stoploss"] - signal["stoploss"] * 0.004
+                signal["tp1"] = signal["tp1"] - signal["tp1"] * 0.004
+                signal["tp2"] = signal["tp2"] - signal["tp2"] * 0.004
+                signal["tp3"] = signal["tp3"] - signal["tp3"] * 0.004
+                signal["entry1"] = signal["entry1"] - signal["entry1"] * 0.004
            
         result = bot.create_order_best(signal,'best')
         if 'error' in result:
