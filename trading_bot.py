@@ -1235,7 +1235,7 @@ class TradingBot:
                     stop_loss = 0
                     pnl = 0
                     take_profit = 0
-                    price = float(order.get('triggerPrice', 0)) if order.get('orderStatus') == 'Untriggered' else float(order.get('Price', 0))
+                    price = float(order.get('triggerPrice', 0)) if order.get('orderStatus') == 'Untriggered' else float(order.get('price', 0))
                     try:
                         # Sử dụng get_positions thay vì get_position_list
                         pos_response = self.unified_client.get_positions(category='linear', symbol=order.get('symbol'))
@@ -1445,6 +1445,7 @@ class TradingBot:
                         symbol = order.get('symbol')
                         side = order.get('side')
                         orderStoploss = order.get('stopOrderType')
+                        time.sleep(15)
                         result = self.execute_query(
                             """
                             SELECT id, symbol, side, quantity, entry_price, 

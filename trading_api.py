@@ -77,12 +77,14 @@ def create_order_best():
         }
 
         print(signal)
+        result = []
         if percentage > -1 and percentage < 1:
             signal["stoploss"] = signal["stoploss"] - percentage*last_price/100
             signal["tp1"] = signal["tp1"] - percentage*last_price/100
             signal["tp2"] = signal["tp2"] - percentage*last_price/100
             signal["tp3"] = signal["tp3"] - percentage*last_price/100
             signal["entry1"] = signal["entry1"] - percentage*last_price/100
+            result = bot.create_order_best(signal,'ema')
         else:
             if signal["position"] == "LONG":
                 signal["stoploss"] = signal["stoploss"] + signal["stoploss"] * 0.004
@@ -97,7 +99,8 @@ def create_order_best():
                 signal["tp3"] = signal["tp3"] - signal["tp3"] * 0.004
                 signal["entry1"] = signal["entry1"] - signal["entry1"] * 0.004
            
-        result = bot.create_order_best(signal,'best')
+            result = bot.create_order_best(signal,'best')
+
         if 'error' in result:
             return jsonify({'error': result['error']}), 400
         return jsonify(result), 201
