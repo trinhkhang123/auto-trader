@@ -893,7 +893,6 @@ class TradingBot:
             # Tính toán số lượng cần đóng
             close_qty = float((quantity * Decimal(str(percentage))).quantize(Decimal('0.00000001'), rounding=ROUND_DOWN))
             opposite_side = 'Sell' if trade['side'].lower() == 'buy' else 'Buy'
-
             # Lấy thông tin vị thế hiện tại
             try:
                 position_info = self.client.get_positions(
@@ -911,10 +910,12 @@ class TradingBot:
                 positions = position_info['result'].get('list', [])
                 if positions:
                     # Lấy position_idx và kích thước vị thế hiện tại
-                    position = positions[0]
-                    position_idx = int(position.get('positionIdx', 0))
-                    position_size = float(Decimal(str(position.get('size', 0))).quantize(Decimal('0.00000001'), rounding=ROUND_DOWN))
-            
+                    for position in positions:
+                        if position.get('side') == trade['side'] and float(Decimal(str(position.get('size', 0)))) > 0:
+                            position_idx = int(position.get('positionIdx', 0))
+                            position_size = float(Decimal(str(position.get('size', 0))).quantize(Decimal('0.00000001'), rounding=ROUND_DOWN))
+                           
+                            break
             # Kiểm tra nếu vị thế đã về 0 hoặc không tồn tại
             if position_size <= 0 or close_qty <= 0:
                 logger.warning(f"Vị thế {trade['symbol']} đã đóng hoặc không tồn tại. Đang cập nhật trạng thái...")
