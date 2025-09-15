@@ -76,7 +76,7 @@ def create_order_best():
             'bot': "bestsignal"
         }
 
-        if signal["asset"] == "BNBUSDT" and signal["asset"] == "ADAUSDT" and signal["asset"] == "ATOMUSDT" :
+        if signal["asset"] == "BNBUSDT" and signal["asset"] == "ADAUSDT" and signal["asset"] == "ATOMUSDT" and signal["asset"] == "AVAXUSDT":
            return jsonify({'error': 'BNBUSDT is not supported'}), 400
 
         print(signal)
