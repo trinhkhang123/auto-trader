@@ -76,14 +76,22 @@ def create_order_best():
             'bot': "bestsignal"
         }
 
+        if signal["asset"] == "BNBUSDT" and signal["asset"] == "ADAUSDT" and signal["asset"] == "ATOMUSDT" :
+           return jsonify({'error': 'BNBUSDT is not supported'}), 400
+
         print(signal)
         result = []
         if percentage > -1 and percentage < 1:
-            signal["stoploss"] = signal["stoploss"] - percentage*last_price/100
+            # signal["stoploss"] = signal["stoploss"] - percentage*last_price/100
             signal["tp1"] = signal["tp1"] - percentage*last_price/100
             signal["tp2"] = signal["tp2"] - percentage*last_price/100
             signal["tp3"] = signal["tp3"] - percentage*last_price/100
             signal["entry1"] = signal["entry1"] - percentage*last_price/100
+            if signal["position"] == "LONG" and (signal["tp1"] - signal["entry1"])/signal["tp1"] > 0.017:
+                signal["tp1"] = signal["entry1"] + 0.017*signal["tp1"]
+            if signal["position"] == "SHORT" and (signal["entry1"] - signal["tp1"])/signal["entry1"] > 0.017:
+                signal["tp1"] = signal["entry1"] - 0.017*signal["entry1"]
+
             result = bot.create_order_best(signal,'ema')
         else:
             if signal["position"] == "LONG":
@@ -98,7 +106,10 @@ def create_order_best():
                 signal["tp2"] = signal["tp2"] - signal["tp2"] * 0.01
                 signal["tp3"] = signal["tp3"] - signal["tp3"] * 0.01
                 signal["entry1"] = signal["entry1"] - signal["entry1"] * 0.01
-           
+            if signal["position"] == "LONG" and (signal["tp1"] - signal["entry1"])/signal["tp1"] > 0.017:
+                signal["tp1"] = signal["entry1"] + 0.017*signal["tp1"]
+            if signal["position"] == "SHORT" and (signal["entry1"] - signal["tp1"])/signal["entry1"] > 0.017:
+                signal["tp1"] = signal["entry1"] - 0.017*signal["entry1"]
             result = bot.create_order_best(signal,'best')
 
         if 'error' in result:
